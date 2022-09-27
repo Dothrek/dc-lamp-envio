@@ -1,0 +1,47 @@
+version: '3'
+
+# Listing all of our services A.K.A containers that are going to work together
+services:
+  # This is the database image that we are setting up
+  db:
+    image: mysql:latest
+    environment:
+      MYSQL_DATABASE: lamp_docker
+      MYSQL_USER: lamp_docker
+      MYSQL_PASSWORD: password
+      MYSQL_ALLOW_EMPTY_PASSWORD: 1
+    volumes:
+      - "./db:/docker-entrypoint-initdb.d"
+    networks:
+      - lamp-docker
+
+  # This is the apache image that we are setting up
+  www:
+    depends_on:
+      - db
+    build: .
+    volumes:
+      - "./:/var/www/html"
+    ports:
+      - 80:80
+      - 443:443 
+    networks:
+      - lamp-docker
+
+  # This is the phpmyadmin image that we are setting up
+  phpmyadmin:
+    depends_on:
+      - db
+    image: phpmyadmin/phpmyadmin
+    ports:
+      - 8001:80
+    environment:
+      - PMA_HOST=db
+      - PMA_PORT=3306
+    networks:
+      - lamp-docker
+
+# This makes that all of our images are working together under the name "lamp-docker", name given in the "networks" variable inside each image
+networks:
+  lamp-docker:
+    driver: bridge
